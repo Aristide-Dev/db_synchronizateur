@@ -36,24 +36,49 @@ class YelemaSynchronizationDB
         $this->EXTERNAL_DB_PASSWORD = $external_db_password;
 
         $this->LOCAL_PDO = $this->get_local_PDO();
+        
+        echo $this->colorize("\nDB locale connectée.\n", 'green');
         $this->EXTERNAL_PDO = $this->get_external_PDO();
+        echo $this->colorize("\nDB externe connectée.\n", 'green');
     }
 
     private function get_local_PDO(): PDO
     {
-        return $this->LOCAL_PDO ?? new PDO("mysql:dbname={$this->LOCAL_DB_NAME};host={$this->LOCAL_HOST};charset=utf8mb4;", $this->LOCAL_DB_USER, $this->LOCAL_DB_PASSWORD, [
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_OBJ
-        ]);
+        echo $this->colorize("\nDebut de la connexion la DB locale.\n", 'red');
+        if(!$this->LOCAL_PDO)
+        {
+            try {
+                $this->LOCAL_PDO =  new PDO("mysql:dbname={$this->LOCAL_DB_NAME};host={$this->LOCAL_HOST};charset=utf8mb4;", $this->LOCAL_DB_USER, $this->LOCAL_DB_PASSWORD, [
+                    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_OBJ
+                ]);
+            } catch (\PDOException $th) {
+                //throw $th;
+                echo $this->colorize("Erreur de connexion à la db locale : " . $th->getMessage(),"red");
+            }
+        }
+        return $this->LOCAL_PDO;
     }
 
     private function get_external_PDO(): PDO
     {
-        return $this->EXTERNAL_PDO ?? new PDO("mysql:dbname={$this->EXTERNAL_DB_NAME};host={$this->EXTERNAL_HOST};charset=utf8mb4;", $this->EXTERNAL_DB_USER, $this->EXTERNAL_DB_PASSWORD, [
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_OBJ
-        ]);
+        echo $this->colorize("\nDébut de la connexion à la base de données externe.\n", 'red');
+        if ($this->EXTERNAL_PDO === null) {
+            try {
+                $this->EXTERNAL_PDO = new PDO("mysql:dbname={$this->EXTERNAL_DB_NAME};host={$this->EXTERNAL_HOST};charset=utf8mb4;", $this->EXTERNAL_DB_USER, $this->EXTERNAL_DB_PASSWORD, [
+                    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_OBJ
+                ]);
+            } catch (PDOException $th) {
+                // Handle the exception
+                echo $this->colorize("Erreur de connexion à la base de données externe : " . $th->getMessage(), "red");
+                // Optionally, rethrow the exception for higher-level handling
+                // throw $th;
+            }
+        }
+        return $this->EXTERNAL_PDO;
     }
+    
 
     public function synchronizeData($local_table, $remote_table)
     {
